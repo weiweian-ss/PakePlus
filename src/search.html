@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>处方记录查询系统</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"SimSun",宋体;
+}
+body{
+  background:#efefef;
+  padding:20px;
+}
+.wrap{
+  max-width:1200px;
+  margin:0 auto;
+}
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+h1{
+  font-size:22px;
+  color:#222;
+}
+.tool-bar{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+#keyword{
+  padding:9px 12px;
+  font-size:15px;
+  border:1px solid #bbb;
+  border-radius:4px;
+  width:260px;
+}
+button{
+  padding:8px 16px;
+  cursor:pointer;
+  border:1px solid #999;
+  border-radius:3px;
+}
+.btn-blue{
+  background:#0275d8;
+  color:#fff;
+  border-color:#0275d8;
+}
+.btn-red{
+  background:#d9534f;
+  color:#fff;
+  border-color:#d9534f;
+}
+.btn-green{
+  background:#28a745;
+  color:#fff;
+  border-color:#28a745;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:10px;
+  font-size:14px;
+}
+th{
+  background:#f5f5f5;
+}
+.operate-btn{
+  display:flex;
+  gap:4px;
+}
+.empty{
+  text-align:center;
+  padding:40px;
+  font-size:16px;
+  color:#666;
+}
+.modal-mask{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal-box{
+  width:760px;
+  max-height:85vh;
+  overflow-y:auto;
+  background:#fff;
+  padding:24px;
+  border-radius:6px;
+}
+.modal-title{
+  font-size:18px;
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid #ddd;
+}
+.content-block{
+  line-height:1.8;
+  white-space:pre-line;
+  font-size:15px;
+}
+.modal-footer{
+  margin-top:16px;
+  text-align:right;
+}
+
+/* ==========打印样式【重点】========== */
+@media print{
+  body * {
+    visibility:hidden;
+  }
+  .print-area, .print-area *{
+    visibility:visible;
+  }
+  .print-area{
+    position:absolute;
+    left:0;
+    top:0;
+    width:148mm;
+    margin:0 auto;
+  }
+  .pres-print-card{
+    width:148mm;
+    min-height:210mm;
+    border:1px solid #000;
+    padding:12mm;
+    margin-bottom:10mm;
+    page-break-after:always;
+  }
+  @page{
+    size:A5 portrait;
+    margin:0mm;
+  }
+}
+.print-area{
+  display:none;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-bar">
+    <h1>处方记录查询</h1>
+    <button onclick="location.href='main.html'">← 返回系统主页面</button>
+  </div>
+  <div class="tool-bar">
+    <input id="keyword" placeholder="输入患者姓名检索处方..." oninput="renderList()">
+    <button class="btn-blue" onclick="renderList()">搜索</button>
+    <button onclick="selectAll()">全选/取消全选</button>
+    <button class="btn-green" onclick="batchPrint()">🖨批量打印选中处方</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th width="60">勾选</th>
+        <th width="160">日期</th>
+        <th width="140">姓名</th>
+        <th width="90">性别</th>
+        <th width="90">年龄</th>
+        <th>临床诊断</th>
+        <th width="160">操作</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+  </table>
+</div>
+
+<!--打印渲染容器（页面隐藏，打印生效）-->
+<div class="print-area" id="printContainer"></div>
+
+<!--弹窗：处方详情弹窗-->
+<div class="modal-mask" id="modal">
+  <div class="modal-box">
+    <div class="modal-title">处方完整详情</div>
+    <div class="content-block" id="detailContent"></div>
+    <div class="modal-footer">
+      <button onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allRecordList = [];
+let showIndex = null;
+let selectAllFlag = false;
+
+window.onload = function(){
+  loadData();
+  renderList();
+}
+
+//读取本地存储处方数据
+function loadData(){
+  allRecordList = JSON.parse(localStorage.getItem("prescriptionRecords") || "[]");
+  //最新数据放在顶部
+  allRecordList.reverse();
+}
+
+//渲染表格列表
+function renderList(){
+  const key = document.getElementById("keyword").value.trim();
+  const tbody = document.getElementById("tableBody");
+  let html = "";
+  let filterData = allRecordList;
+  if(key){
+    filterData = allRecordList.filter(item=>{
+      return item.patientName.includes(key);
+    })
+  }
+  if(filterData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">暂无匹配处方记录</td></tr>`;
+    return;
+  }
+  filterData.forEach((item,idx)=>{
+    html += `
+    <tr data-index="${idx}">
+      <td><input type="checkbox" class="chk-item" data-idx="${idx}"></td>
+      <td>${item.createDate}</td>
+      <td>${item.patientName}</td>
+      <td>${item.sex}</td>
+      <td>${item.age}</td>
+      <td>${item.diagnosis}</td>
+      <td class="operate-btn">
+        <button class="btn-blue" onclick="viewDetail(${idx})">查看详情</button>
+        <button class="btn-red" onclick="delRecord(${idx})">删除</button>
+      </td>
+    </tr>
+    `;
+  })
+  tbody.innerHTML = html;
+}
+
+//全选/取消全选
+function selectAll(){
+  selectAllFlag = !selectAllFlag;
+  document.querySelectorAll(".chk-item").forEach(ck=>{
+    ck.checked = selectAllFlag;
+  })
+}
+
+//查看处方详情弹窗
+function viewDetail(idx){
+  showIndex = idx;
+  const data = allRecordList[idx];
+  const html = `
+姓名：${data.patientName}　性别：${data.sex}　年龄：${data.age}
+联系电话：${data.tel}
+科别：${data.depart}
+诊断：${data.diagnosis}
+开具日期：${data.createDate}
+
+【药品清单】
+${data.drugContent}
+`;
+  document.getElementById("detailContent").innerText = html;
+  document.getElementById("modal").style.display="flex";
+}
+
+//关闭弹窗
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+//删除处方记录
+function delRecord(idx){
+  if(!confirm("确认永久删除这条处方记录？删除无法恢复！")) return;
+  allRecordList.splice(idx,1);
+  localStorage.setItem("prescriptionRecords",JSON.stringify(allRecordList));
+  renderList();
+}
+
+//批量打印功能
+function batchPrint(){
+  const checkedItems = document.querySelectorAll(".chk-item:checked");
+  if(checkedItems.length === 0){
+    alert("请先勾选需要打印的处方！");
+    return;
+  }
+  let printHtml = "";
+  checkedItems.forEach(ck=>{
+    const idx = ck.getAttribute("data-idx");
+    const data = allRecordList[idx];
+    printHtml += `
+    <div class="pres-print-card">
+      <div style="text-align:center;font-size:20px;margin-bottom:8px;">辛庄中心卫生院一体化村卫生室专用处方笺</div>
+      <div style="border-bottom:1px solid #000;margin-bottom:10px;"></div>
+      <div>姓名：${data.patientName}　性别：${data.sex}　年龄：${data.age}　联系电话：${data.tel}</div>
+      <div>科别：${data.depart}　临床诊断：${data.diagnosis}</div>
+      <div>日期：${data.createDate}</div>
+      <div style="margin:12px 0;border-top:1px solid #000;"></div>
+      <div style="font-size:42px;margin:6px 0;">R</div>
+      <div style="white-space:pre-line;line-height:28px;">${data.drugContent}</div>
+      <div style="position:absolute;bottom:12mm;left:12mm;right:12mm;">
+        <div style="border-top:1px solid #000;margin:10px 0;"></div>
+        <div>医师签名：_________________</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span>药品金额：___________</span>
+          <span>审核：________</span>
+          <span>调配：________</span>
+          <span>核对：________</span>
+        </div>
+      </div>
+    </div>
+    `;
+  })
+  document.getElementById("printContainer").innerHTML = printHtml;
+  window.print();
+}
+</script>
+</body>
+</html>
