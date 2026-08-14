@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +11,9 @@ section{padding:20px;max-width:1200px;margin:0 auto}
 input,select{padding:6px;border:1px solid #aaa;font-size:14px}
 table{width:100%;border-collapse:collapse;margin:20px 0}
 th,td{border:1px solid #999;padding:8px;text-align:center;font-size:14px}
-button{padding:7px 12px;cursor:pointer;border:none;background:#225494;color:#fff;border-radius:3px}
+button{padding:7px 10px;cursor:pointer;border:none;background:#225494;color:#fff;border-radius:3px;margin:0 2px}
+.btn-del{background:#bb2222}
+.btn-reset{background:#c27000}
 .back{cursor:pointer}
 </style>
 </head>
@@ -35,22 +38,67 @@ button{padding:7px 12px;cursor:pointer;border:none;background:#225494;color:#fff
 <option value="其他">其他</option>
 </select>
 <label>药品名称</label>
-<input id="drugName" placeholder="通用药品名称"></input>
+<input id="drugName" placeholder="通用药品名称">
 
 <label>规格</label>
-<input id="spec" placeholder="例如：0.25g*6片"></input>
+<input id="spec" placeholder="例如：0.25g*6片">
 
 <label>单位</label>
-<input id="unit" placeholder="片/瓶/支"></input>
+<select id="unit">
+<option value="">选择单位</option>
+<option value="片">片</option>
+<option value="瓶">瓶</option>
+<option value="支">支</option>
+<option value="袋">袋</option>
+<option value="盒">盒</option>
+<option value="ml">ml</option>
+<option value="g">g</option>
+</select>
 
 <label>单价</label>
 <input type="number" step="0.01" id="price" placeholder="单价">
-  </div>
+</div>
+
 <div class="form-row">
 <label>默认用法</label>
-<input style="width:420px" id="defaultUsage" placeholder="示例：2粒 每日1次 口服">
-<button onclick="addDrug()">新增保存药品</button>
-</div>  <table>
+<select id="dosageSel">
+    <option value="">选择剂量</option>
+    <option value="1粒">1粒</option>
+    <option value="2粒">2粒</option>
+    <option value="3粒">3粒</option>
+    <option value="1片">1片</option>
+    <option value="2片">2片</option>
+    <option value="1支">1支</option>
+    <option value="1袋">1袋</option>
+    <option value="5ml">5ml</option>
+    <option value="10ml">10ml</option>
+</select>
+
+<select id="freqSel">
+    <option value="">选择频次</option>
+    <option value="每日1次">每日1次</option>
+    <option value="每日2次">每日2次</option>
+    <option value="每日3次">每日3次</option>
+</select>
+
+<select id="waySel">
+    <option value="">选择给药方式</option>
+    <option value="口服">口服</option>
+    <option value="肌注">肌注</option>
+    <option value="静滴">静滴</option>
+    <option value="滴眼">滴眼</option>
+    <option value="外用">外用</option>
+    <option value="含服">含服</option>
+    <option value="静脉推注">静脉推注</option>
+</select>
+
+<button id="saveBtn" onclick="addDrug()">新增保存药品</button>
+<button class="btn-reset" onclick="resetDefaultDrug()">恢复预置基础药品</button>
+<!-- 隐藏变量：当前正在编辑的下标，为空代表新增 -->
+<input type="hidden" id="editIndex" value="">
+</div>
+
+<table>
 <thead>
 <tr>
 <th>分类</th>
@@ -64,7 +112,9 @@ button{padding:7px 12px;cursor:pointer;border:none;background:#225494;color:#fff
 </thead>
 <tbody id="drugTable"></tbody>
 </table>
-</section><script>
+</section>
+
+<script>
 //=====【登录校验，请勿删除】=====
 let loginInfo = localStorage.getItem("loginUser");
 if(!loginInfo){
@@ -72,8 +122,87 @@ alert("请登录系统！");
 location.href="index.html";
 }
 
+//=====【预置药品数据，首次打开自动加载】=====
+const defaultDrugs = [
+    // —— 抗生素（6种）——
+    {type:"抗生素", name:"注射用青霉素钠", spec:"160万单位", unit:"支", price:"0.75", defaultUsage:"1支 每日2次 静滴"},
+    {type:"抗生素", name:"头孢拉定胶囊", spec:"0.25g*24粒", unit:"盒", price:"4.15", defaultUsage:"2粒 每日3次 口服"},
+    {type:"抗生素", name:"头孢氨苄片", spec:"0.25g*20片", unit:"盒", price:"2.80", defaultUsage:"2片 每日3次 口服"},
+    {type:"抗生素", name:"阿莫西林胶囊", spec:"0.25g*40粒", unit:"盒", price:"4.60", defaultUsage:"2粒 每日3次 口服"},
+    {type:"抗生素", name:"罗红霉素片", spec:"0.15g*6片", unit:"盒", price:"2.69", defaultUsage:"1片 每日2次 口服"},
+    {type:"抗生素", name:"盐酸环丙沙星片", spec:"0.25g*20片", unit:"盒", price:"3.57", defaultUsage:"2片 每日2次 口服"},
+
+    // —— 心血管（8种）——
+    {type:"心血管", name:"厄贝沙坦氢氯噻嗪片", spec:"0.15g:12.5mg*9片", unit:"盒", price:"3.00", defaultUsage:"1片 每日1次 口服"},
+    {type:"心血管", name:"苯磺酸氨氯地平片", spec:"5mg*28片", unit:"盒", price:"1.53", defaultUsage:"1片 每日1次 口服"},
+    {type:"心血管", name:"阿托伐他汀钙片", spec:"20mg*14片", unit:"盒", price:"2.86", defaultUsage:"1片 每日1次 口服"},
+    {type:"心血管", name:"硝酸异山梨酯片", spec:"5mg*100片", unit:"盒", price:"2.70", defaultUsage:"2片 每日3次 口服"},
+    {type:"心血管", name:"硫酸氢氯吡格雷片", spec:"75mg*28片", unit:"盒", price:"9.15", defaultUsage:"1片 每日1次 口服"},
+    {type:"心血管", name:"呋塞米片", spec:"20mg*100片", unit:"瓶", price:"5.75", defaultUsage:"1片 每日1次 口服"},
+    {type:"心血管", name:"盐酸倍他司汀注射液", spec:"2ml:10mg", unit:"支", price:"1.49", defaultUsage:"1支 每日1次 静滴"},
+    {type:"心血管", name:"盐酸艾司洛尔注射液", spec:"10ml:0.1g", unit:"支", price:"1.89", defaultUsage:"1支 每日1次 静滴"},
+
+    // —— 中成药（8种）——
+    {type:"中成药", name:"血塞通注射液", spec:"2ml:0.1g", unit:"支", price:"0.78", defaultUsage:"2支 每日1次 静滴"},
+    {type:"中成药", name:"丹参注射液", spec:"10ml", unit:"支", price:"1.50", defaultUsage:"2支 每日1次 静滴"},
+    {type:"中成药", name:"银杏叶片", spec:"0.4g*36片", unit:"盒", price:"4.18", defaultUsage:"2片 每日3次 口服"},
+    {type:"中成药", name:"麝香保心丸", spec:"22.5mg*42丸", unit:"瓶", price:"29.80", defaultUsage:"2粒 每日3次 口服"},
+    {type:"中成药", name:"复方丹参滴丸", spec:"27mg*180丸", unit:"瓶", price:"22.18", defaultUsage:"1粒 每日3次 口服"},
+    {type:"中成药", name:"稳心颗粒", spec:"5g*18袋", unit:"盒", price:"53.28", defaultUsage:"1袋 每日3次 口服"},
+    {type:"中成药", name:"活血止痛胶囊", spec:"0.25g*60粒", unit:"盒", price:"6.19", defaultUsage:"3粒 每日3次 口服"},
+    {type:"中成药", name:"天麻素注射液", spec:"2ml:0.2g", unit:"支", price:"0.67", defaultUsage:"1支 每日1次 肌注"},
+
+    // —— 呼吸消化（7种）——
+    {type:"呼吸消化", name:"奥美拉唑肠溶胶囊", spec:"20mg*28粒", unit:"盒", price:"4.06", defaultUsage:"1粒 每日1次 口服"},
+    {type:"呼吸消化", name:"雷贝拉唑钠肠溶片", spec:"20mg*30片", unit:"盒", price:"8.94", defaultUsage:"1片 每日1次 口服"},
+    {type:"呼吸消化", name:"铝碳酸镁咀嚼片", spec:"0.5g*30片", unit:"盒", price:"4.45", defaultUsage:"2片 每日3次 口服"},
+    {type:"呼吸消化", name:"蒙脱石散", spec:"3g*15袋", unit:"盒", price:"4.12", defaultUsage:"1袋 每日3次 口服"},
+    {type:"呼吸消化", name:"盐酸氨溴索片", spec:"30mg*20片", unit:"盒", price:"1.50", defaultUsage:"1片 每日3次 口服"},
+    {type:"呼吸消化", name:"多潘立酮片", spec:"10mg*30片", unit:"盒", price:"3.97", defaultUsage:"1片 每日3次 口服"},
+    {type:"呼吸消化", name:"注射用泮托拉唑钠", spec:"40mg", unit:"瓶", price:"0.99", defaultUsage:"1支 每日1次 静滴"},
+
+    // —— 解热镇痛（5种）——
+    {type:"解热镇痛", name:"双氯芬酸钠缓释片", spec:"0.1g*10片", unit:"盒", price:"2.48", defaultUsage:"1片 每日1次 口服"},
+    {type:"解热镇痛", name:"布洛芬缓释胶囊", spec:"0.3g*20粒", unit:"盒", price:"5.39", defaultUsage:"1粒 每日2次 口服"},
+    {type:"解热镇痛", name:"美洛昔康片", spec:"7.5mg*30片", unit:"盒", price:"3.66", defaultUsage:"1片 每日1次 口服"},
+    {type:"解热镇痛", name:"塞来昔布胶囊", spec:"0.2g*30粒", unit:"瓶", price:"8.50", defaultUsage:"1粒 每日2次 口服"},
+    {type:"解热镇痛", name:"复方氨酚烷胺片", spec:"12片", unit:"盒", price:"3.57", defaultUsage:"1片 每日2次 口服"},
+
+    // —— 内分泌（3种）——
+    {type:"内分泌", name:"阿卡波糖片", spec:"50mg*30片", unit:"盒", price:"3.81", defaultUsage:"1片 每日3次 口服"},
+    {type:"内分泌", name:"格列本脲片", spec:"2.5mg*100片", unit:"瓶", price:"1.79", defaultUsage:"1片 每日3次 口服"},
+    {type:"内分泌", name:"格列美脲片", spec:"1mg*30片", unit:"盒", price:"1.61", defaultUsage:"1片 每日1次 口服"},
+
+    // —— 外用（2种）——
+    {type:"外用", name:"红霉素软膏", spec:"10g", unit:"盒", price:"1.40", defaultUsage:"1支 每日2次 外用"},
+    {type:"外用", name:"普拉洛芬滴眼液", spec:"5ml", unit:"盒", price:"6.76", defaultUsage:"1支 每日3次 滴眼"},
+
+    // —— 其他（4种）——
+    {type:"其他", name:"地塞米松磷酸钠注射液", spec:"1ml:5mg*10支", unit:"盒", price:"2.30", defaultUsage:"1支 每日1次 静滴"},
+    {type:"其他", name:"维生素B6注射液", spec:"2ml:0.1g*10支", unit:"盒", price:"1.90", defaultUsage:"1支 每日1次 静滴"},
+    {type:"其他", name:"胞磷胆碱钠注射液", spec:"2ml:0.25g*10支", unit:"盒", price:"6.90", defaultUsage:"2支 每日1次 静滴"},
+    {type:"其他", name:"非那雄胺片", spec:"5mg*30片", unit:"盒", price:"7.36", defaultUsage:"1片 每日1次 口服"}
+];
+
 window.onload = function(){
-renderTable();
+    // 首次打开时，若没有药品数据则加载预置药品
+    let existing = localStorage.getItem("medicineList");
+    if(!existing || JSON.parse(existing).length === 0){
+        localStorage.setItem("medicineList", JSON.stringify(defaultDrugs));
+    }
+    renderTable();
+}
+
+/**
+ * 恢复预置基础药品按钮
+ * 警告：会覆盖全部现有药品，自定义新增会丢失
+ */
+function resetDefaultDrug(){
+    const ok = confirm("⚠️警告：此操作将覆盖当前全部药品清单，恢复为出厂预置药品，您自定义新增的药品会全部丢失！确定继续吗？");
+    if(!ok) return;
+    localStorage.setItem("medicineList", JSON.stringify(defaultDrugs));
+    renderTable();
+    alert("已恢复预置基础药品！");
 }
 
 //渲染药品表格
@@ -90,43 +219,104 @@ tr.innerHTML=`
 <td>${item.unit}</td>
 <td>${item.price}</td>
 <td>${item.defaultUsage}</td>
-<td><button onclick="del(${idx})">删除</button></td>
+<td>
+<button onclick="editItem(${idx})">编辑</button>
+<button class="btn-del" onclick="del(${idx})">删除</button>
+</td>
 `;
 tb.appendChild(tr);
 })
 }
 
-//新增药品保存到本地存储
+//【编辑功能：点击编辑，回填表单】
+function editItem(index){
+let list = JSON.parse(localStorage.getItem("medicineList")||"[]");
+let data = list[index];
+
+//回填基础信息
+document.getElementById("drugType").value = data.type;
+document.getElementById("drugName").value = data.name;
+document.getElementById("spec").value = data.spec;
+document.getElementById("unit").value = data.unit;
+document.getElementById("price").value = data.price;
+
+//拆分用法字符串 "2粒 每日1次 口服"
+let usageArr = data.defaultUsage.split(" ");
+if(usageArr.length ===3){
+    document.getElementById("dosageSel").value = usageArr[0];
+    document.getElementById("freqSel").value = usageArr[1];
+    document.getElementById("waySel").value = usageArr[2];
+}
+
+//标记当前为编辑模式，记录下标
+document.getElementById("editIndex").value = index;
+document.getElementById("saveBtn").innerText = "保存修改";
+//页面滚动到顶部表单区域
+window.scrollTo(0,0);
+}
+
+//新增 / 统一保存入口（区分新增和编辑）
 function addDrug(){
+const editIndex = document.getElementById("editIndex").value;
 const type = document.getElementById('drugType').value;
 const name = document.getElementById('drugName').value.trim();
 const spec = document.getElementById('spec').value.trim();
-const unit = document.getElementById('unit').value.trim();
+const unit = document.getElementById('unit').value;
 const price = document.getElementById('price').value.trim();
-const defaultUsage = document.getElementById('defaultUsage').value.trim();
 
+const dosage = document.getElementById("dosageSel").value;
+const freq = document.getElementById("freqSel").value;
+const way = document.getElementById("waySel").value;
+
+//校验
 if(!name){alert("请填写药品名称！");return;}
+if(!unit){alert("请选择单位！");return;}
+if(!dosage || !freq || !way){
+    alert("请完整选择【剂量、频次、给药方式】！");
+    return;
+}
+const defaultUsage = `${dosage} ${freq} ${way}`;
 
 let drugList = JSON.parse(localStorage.getItem("medicineList")||"[]");
-drugList.push({type,name,spec,unit,price,defaultUsage});
+
+if(editIndex === ""){
+    //新增模式
+    drugList.push({type,name,spec,unit,price,defaultUsage});
+}else{
+    //编辑模式：覆盖原有数据
+    let idx = parseInt(editIndex);
+    drugList[idx] = {type,name,spec,unit,price,defaultUsage};
+}
+
 localStorage.setItem("medicineList",JSON.stringify(drugList));
 
-//清空输入框
+//清空表单、恢复新增状态
+clearForm();
+renderTable();
+alert(editIndex === "" ? "药品新增成功！" : "药品修改成功！");
+}
+
+//清空所有输入框，重置为新增模式
+function clearForm(){
 document.getElementById('drugName').value = "";
 document.getElementById('spec').value = "";
 document.getElementById('unit').value = "";
 document.getElementById('price').value = "";
-document.getElementById('defaultUsage').value = "";
-renderTable();
-alert("药品录入成功，开具处方页面可以调用！");
+document.getElementById("dosageSel").value = "";
+document.getElementById("freqSel").value = "";
+document.getElementById("waySel").value = "";
+document.getElementById("editIndex").value = "";
+document.getElementById("saveBtn").innerText = "新增保存药品";
 }
 
 //删除药品
 function del(index){
+if(!confirm("确定删除该药品吗？删除后无法恢复！")) return;
 let list = JSON.parse(localStorage.getItem("medicineList")||"[]");
 list.splice(index,1);
 localStorage.setItem("medicineList",JSON.stringify(list));
 renderTable();
 }
-</script></body>
+</script>
+</body>
 </html>
