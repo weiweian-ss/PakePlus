@@ -19,7 +19,7 @@ body{
 
 /* =========左侧：开药操作面板 ========= */
 .left-panel{
-  width: 420px;
+  width: 460px;
   background: #ffffff;
   padding: 20px;
   border-right: 1px solid #cccccc;
@@ -40,8 +40,8 @@ body{
 }
 .left-panel h3{
   margin-bottom:12px;
-  color:#333;
-  font-size:15px;
+  color:#222;
+  font-size:16px;
 }
 .form-row{
   display:flex;
@@ -56,15 +56,16 @@ body{
   margin-bottom:3px;
   font-size:14px;
 }
-.form-item input{
+.form-item input,
+.form-item select{
   width:100%;
-  padding:6px 8px;
+  padding:7px 9px;
   border:1px solid #bbb;
-  border-radius:3px;
+  border-radius:4px;
   font-size:14px;
 }
 .btn-group{
-  margin:14px 0;
+  margin:16px 0;
   display:flex;
   gap:8px;
   flex-wrap:wrap;
@@ -78,74 +79,88 @@ body{
   padding:8px 16px !important;
 }
 button{
-  padding: 7px 10px;
-  font-size:13px;
+  padding: 8px 11px;
+  font-size:14px;
   cursor: pointer;
   border:1px solid #999;
   background:#f7f7f7;
-  border-radius:3px;
+  border-radius:4px;
 }
 button:hover{
   background:#e9e9e9;
 }
 
-/* 药品分类与药品选择区域样式 */
+/* =========药品分类与药品选择区域【重点润色】========= */
 .classify-wrap{
-  border:1px solid #ddd;
-  padding:12px;
-  margin:18px 0;
+  border:1px solid #bbbbbb;
+  padding:16px;
+  margin:20px 0;
+  background:#fafafa;
+  border-radius:6px;
 }
 .classify-list{
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
-  margin-bottom:10px;
+  gap:8px;
+  margin-bottom:14px;
 }
+/* 不同分类标签配色 */
 .classify-item{
-  padding:4px 8px;
-  border:1px solid #bbb;
-  font-size:13px;
+  padding:6px 11px;
+  border:1px solid #b8c2cc;
+  font-size:14px;
   cursor:pointer;
-  border-radius:3px;
+  border-radius:5px;
+  background:#eef2f7;
+  transition:0.15s;
+}
+.classify-item:hover{
+  background:#d8e2ef;
 }
 .classify-item.active{
-  background:#337ab7;
-  color:#fff;
-  border-color:#337ab7;
+  background:#2b60aa;
+  color:#ffffff;
+  border-color:#2b60aa;
 }
+
 .drug-select-list{
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
+  gap:8px;
 }
 .drug-select-item{
-  padding:4px 8px;
-  border:1px solid #ccc;
-  font-size:13px;
+  padding:8px 12px;
+  border:1px solid #cbd5dd;
+  font-size:14px;
   cursor:pointer;
-  border-radius:3px;
+  border-radius:5px;
+  background:#ffffff;
+  transition:0.15s;
 }
 .drug-select-item:hover{
-  background:#f0f8ff;
+  background:#dceeff;
+  border-color:#73a8e0;
 }
 
 .drug-list-box{
-  margin-top:12px;
+  margin-top:14px;
   border:1px solid #ddd;
-  padding:10px;
-  min-height:100px;
+  padding:14px;
+  min-height:110px;
+  background:#fafafa;
+  border-radius:6px;
 }
 .drug-item-row{
   display:flex;
   justify-content:space-between;
-  padding:4px 0;
-  border-bottom:1px dashed #eee;
-  font-size:13px;
+  padding:7px 0;
+  border-bottom:1px dashed #cccccc;
+  font-size:14px;
 }
 .del-drug{
   color:#c00;
   cursor:pointer;
-  font-size:12px;
+  font-size:13px;
 }
 
 /* =========右侧：实时处方预览区 ========= */
@@ -206,11 +221,13 @@ button:hover{
 .rp-sign{
   font-size:40px;
 }
+/* 药品正文放大字号 16px */
 .drug-text-area{
-  font-size:14px;
-  line-height:26px;
+  font-size:16px;
+  line-height:32px;
   min-height:62mm;
   white-space:pre-line;
+  padding-left:6mm;
 }
 .bottom-block{
   position:absolute;
@@ -250,6 +267,9 @@ button:hover{
     overflow:visible;
     background:#fff;
   }
+  .pres-card{
+    border:none !important;
+  }
   @page{
     size:A5 portrait;
     margin:0mm;
@@ -287,7 +307,11 @@ button:hover{
     </div>
     <div class="form-item">
       <label>性别：</label>
-      <input id="in_sex" type="text">
+      <select id="in_sex">
+        <option value="">请选择</option>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
     </div>
     <div class="form-item">
       <label>年龄：</label>
@@ -365,10 +389,10 @@ button:hover{
     <div class="drug-text-area" id="pre_drug_area"></div>
 
     <div class="bottom-block">
-      <div class="doc-line">医师签名：<input style="width:220px;"></div>
+      <div class="doc-line">医师签名：<input id="pre_doctor" style="width:220px;"></div>
       <div class="doc-divider"></div>
       <div class="bottom-row">
-        <span>药品金额<input style="width:90px;"></span>
+        <span>药品金额<input id="pre_total_money" style="width:90px;"></span>
         <span>审核<input style="width:70px;"></span>
         <span>调配<input style="width:70px;"></span>
         <span>核对<input style="width:70px;"></span>
@@ -378,7 +402,6 @@ button:hover{
 </div>
 
 <script>
-// ======================【自动读取medicine.html录入的药品库】 ======================
 let allRawDrugs = JSON.parse(localStorage.getItem("medicineList") || "[]");
 let drugLibrary = [];
 (function buildGroup(){
@@ -391,7 +414,8 @@ let drugLibrary = [];
     groupMap[typeName].push({
       name: item.name,
       spec: item.spec,
-      usage: item.defaultUsage
+      usage: item.defaultUsage,
+      price: Number(item.price || 0)
     });
   })
   for(let key in groupMap){
@@ -402,18 +426,17 @@ let drugLibrary = [];
   }
 })();
 
-let drugArr = [];       // 当前处方药品
-let currentClassIndex = null; // 当前选中分类下标
+let drugArr = [];
+let currentClassIndex = null;
+let tempSelectPrice = 0;
 
-// 初始化页面
 function initPage(){
-  // 默认地址：辛庄、北官庄
   document.getElementById("in_town").value = "辛庄";
   document.getElementById("in_village").value = "北官庄";
   document.getElementById("pre_town").value = "辛庄";
   document.getElementById("pre_village").value = "北官庄";
+  document.getElementById("pre_doctor").value = "韩卫";
 
-  // 当前日期
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth()+1).padStart(2,'0');
@@ -423,7 +446,6 @@ function initPage(){
   renderClassify();
 }
 
-// 渲染所有分类按钮
 function renderClassify(){
   let html = "";
   drugLibrary.forEach((item,idx)=>{
@@ -433,44 +455,41 @@ function renderClassify(){
   if(currentClassIndex !== null){
     renderDrugItem();
   }else{
-    document.getElementById("drugSelectBox").innerHTML = "<span style='font-size:13px;color:#666'>请先点击上方药品分类</span>";
+    document.getElementById("drugSelectBox").innerHTML = "<span style='font-size:14px;color:#666'>请先点击上方药品分类</span>";
   }
 }
 
-// 选中分类
 function selectClass(idx){
   currentClassIndex = idx;
   renderClassify();
   renderDrugItem();
 }
 
-// 渲染当前分类下全部药品
 function renderDrugItem(){
   const targetClass = drugLibrary[currentClassIndex];
   let html = "";
   targetClass.drugList.forEach(drug=>{
-    html += `<div class="drug-select-item" onclick="fillDrugInfo('${drug.name}','${drug.spec}','${drug.usage}')">${drug.name}</div>`;
+    html += `<div class="drug-select-item" onclick="fillDrugInfo('${drug.name}','${drug.spec}','${drug.usage}',${drug.price})">${drug.name}</div>`;
   })
   document.getElementById("drugSelectBox").innerHTML = html;
 }
 
-// 点击药品，自动填充下方三个输入框
-function fillDrugInfo(name,spec,usage){
+function fillDrugInfo(name,spec,usage,price=0){
   document.getElementById("drug_name").value = name;
   document.getElementById("drug_spec").value = spec;
   document.getElementById("drug_usage").value = usage;
+  tempSelectPrice = Number(price);
 }
 
-// 左侧基础信息双向同步预览
-document.querySelectorAll(".left-panel input").forEach(input=>{
-  input.addEventListener('input',function(){
+// 监听input与select双向同步
+document.querySelectorAll(".left-panel input,.left-panel select").forEach(el=>{
+  el.addEventListener('input',function(){
     const preId = "pre_" + this.id.replace("in_","");
     let target = document.getElementById(preId);
     if(target) target.value = this.value;
   })
 })
 
-// 添加药品到处方列表
 function addDrug(){
   let name = document.getElementById("drug_name").value.trim();
   let spec = document.getElementById("drug_spec").value.trim();
@@ -479,18 +498,22 @@ function addDrug(){
     alert("请填写药品名称");
     return;
   }
-  drugArr.push({name,spec,usage});
-  // 添加完成清空录入框
+  drugArr.push({
+    name,
+    spec,
+    usage,
+    price: tempSelectPrice
+  });
   document.getElementById("drug_name").value = "";
   document.getElementById("drug_spec").value = "";
   document.getElementById("drug_usage").value = "";
   refreshDrugView();
 }
 
-// 刷新药品预览（左侧列表 + 右侧处方）
 function refreshDrugView(){
   let html = "";
   let printTextArr = [];
+  let totalMoney = 0;
   drugArr.forEach((item,idx)=>{
     let lineText = `${item.name} ${item.spec}\n${item.usage}`;
     printTextArr.push(lineText);
@@ -498,27 +521,27 @@ function refreshDrugView(){
       <span>${item.name} ${item.spec}</span>
       <span class="del-drug" onclick="delDrug(${idx})">删除</span>
     </div>`;
+    totalMoney += Number(item.price);
   });
   document.getElementById("drug_show").innerHTML = html;
   document.getElementById("pre_drug_area").innerText = printTextArr.join("\n");
+  document.getElementById("pre_total_money").value = totalMoney.toFixed(2);
 }
 
-// 删除单条药品
 function delDrug(index){
   drugArr.splice(index,1);
   refreshDrugView();
 }
 
-// 清空全部处方
 function clearAll(){
-  document.querySelectorAll(".left-panel input").forEach(i=>i.value="");
+  document.querySelectorAll(".left-panel input,.left-panel select").forEach(i=>i.value="");
   drugArr = [];
   currentClassIndex = null;
+  tempSelectPrice = 0;
   refreshDrugView();
   initPage();
 }
 
-// 保存处方函数
 function savePrescriptionData() {
     const patientName = document.getElementById("in_name").value.trim();
     const sex = document.getElementById("in_sex").value.trim();
@@ -526,6 +549,8 @@ function savePrescriptionData() {
     const tel = document.getElementById("in_tel").value.trim();
     const depart = document.getElementById("in_depart").value.trim();
     const diagnosis = document.getElementById("in_diagnosis").value.trim();
+    const town = document.getElementById("in_town").value.trim();
+    const village = document.getElementById("in_village").value.trim();
 
     if (!patientName) {
         alert("患者姓名不能为空！");
@@ -535,6 +560,12 @@ function savePrescriptionData() {
         alert("尚未添加任何药品，无法保存处方！");
         return;
     }
+
+    //计算总金额
+    let totalMoney = 0;
+    drugArr.forEach(item=>{
+        totalMoney += Number(item.price);
+    })
 
     let drugText = "";
     drugArr.forEach((item,index)=>{
@@ -548,9 +579,12 @@ function savePrescriptionData() {
         sex,
         age,
         tel,
+        town,
+        village,
         depart,
         diagnosis,
         drugContent: drugText,
+        totalMoney: totalMoney.toFixed(2),
         createDate: new Date().toLocaleDateString()
     };
 
