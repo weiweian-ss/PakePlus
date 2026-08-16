@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>辛庄中心卫生院 处方开具系统</title>
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "SimSun", "宋体";
+}
+body{
+  background: #efefef;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* =========左侧：开药操作面板 ========= */
+.left-panel{
+  width: 460px;
+  background: #ffffff;
+  padding: 20px;
+  border-right: 1px solid #cccccc;
+  overflow-y: auto;
+}
+.top-bar{
+  text-align: right;
+  margin-bottom:16px;
+  padding-bottom:10px;
+  border-bottom:1px solid #ddd;
+}
+.top-bar button{
+  background:#0275d8;
+  color:#fff;
+  border-color:#0275d8;
+  font-weight:bold;
+  padding:8px 14px;
+}
+.left-panel h3{
+  margin-bottom:12px;
+  color:#222;
+  font-size:16px;
+}
+.form-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:8px;
+}
+.form-item{
+  flex:1;
+}
+.form-item label{
+  display:block;
+  margin-bottom:3px;
+  font-size:14px;
+}
+.form-item input,
+.form-item select{
+  width:100%;
+  padding:7px 9px;
+  border:1px solid #bbb;
+  border-radius:4px;
+  font-size:14px;
+}
+.btn-group{
+  margin:16px 0;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.btn-print{
+  background:#d9534f !important;
+  color:#fff !important;
+  border-color:#d9534f !important;
+  font-weight:bold;
+  padding:8px 16px !important;
+}
+button{
+  padding: 8px 11px;
+  font-size:14px;
+  cursor: pointer;
+  border:1px solid #999;
+  background:#f7f7f7;
+  border-radius:4px;
+}
+button:hover{
+  background:#e9e9e9;
+}
+
+/* =========药品分类与药品选择区域========= */
+.classify-wrap{
+  border:1px solid #bbbbbb;
+  padding:16px;
+  margin:20px 0;
+  background:#fafafa;
+  border-radius:6px;
+}
+.classify-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:14px;
+}
+.classify-item{
+  padding:6px 11px;
+  border:1px solid #b8c2cc;
+  font-size:14px;
+  cursor:pointer;
+  border-radius:5px;
+  background:#eef2f7;
+  transition:0.15s;
+}
+.classify-item:hover{
+  background:#d8e2ef;
+}
+.classify-item.active{
+  background:#2b60aa;
+  color:#ffffff;
+  border-color:#2b60aa;
+}
+
+.drug-select-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.drug-select-item{
+  padding:8px 12px;
+  border:1px solid #cbd5dd;
+  font-size:14px;
+  cursor:pointer;
+  border-radius:5px;
+  background:#ffffff;
+  transition:0.15s;
+}
+.drug-select-item:hover{
+  background:#dceeff;
+  border-color:#73a8e0;
+}
+
+.drug-list-box{
+  margin-top:14px;
+  border:1px solid #ddd;
+  padding:14px;
+  min-height:110px;
+  background:#fafafa;
+  border-radius:6px;
+}
+.drug-item-row{
+  display:flex;
+  justify-content:space-between;
+  padding:7px 0;
+  border-bottom:1px dashed #cccccc;
+  font-size:14px;
+}
+.del-drug{
+  color:#c00;
+  cursor:pointer;
+  font-size:13px;
+}
+
+/* =========自定义放大日历样式 ========= */
+.date-input-wrap{
+  position:relative;
+}
+.calendar-btn{
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:transparent;
+  font-size:18px;
+  padding:0 4px;
+}
+.calendar-panel{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  width:340px;
+  background:#fff;
+  border:2px solid #999;
+  padding:12px;
+  z-index:999;
+  box-shadow:0 4px 12px #0003;
+  display:none;
+}
+.calendar-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  gap:6px;
+}
+.calendar-head select{
+  padding:4px;
+  font-size:15px;
+}
+.week-title{
+  display:grid;
+  grid-template-columns: repeat(7,1fr);
+  text-align:center;
+  font-weight:bold;
+  font-size:15px;
+  margin-bottom:6px;
+  gap:4px;
+}
+.day-grid{
+  display:grid;
+  grid-template-columns: repeat(7,1fr);
+  gap:4px;
+}
+.day-cell{
+  text-align:center;
+  padding:10px 0;
+  font-size:16px;
+  border:1px solid #ddd;
+  cursor:pointer;
+}
+.day-cell:hover{
+  background:#e0edff;
+}
+.day-cell.current{
+  background:#2b60aa;
+  color:#fff;
+  border-color:#2b60aa;
+}
+.day-cell.other-month{
+  color:#aaa;
+  background:#f6f6f6;
+  cursor:default;
+}
+
+/* =========右侧：实时处方预览区 ========= */
+.right-panel{
+  flex:1;
+  padding:20px;
+  overflow-y:auto;
+  display:flex;
+  justify-content:center;
+  background:#e4e4e4;
+}
+
+/* A5处方卡片 定稿样式 */
+.pres-card{
+  width:148mm;
+  height:210mm;
+  background:#fff;
+  border:1px solid #333;
+  padding:12mm;
+  position:relative;
+}
+.pres-title{
+  text-align:center;
+  font-size:19px;
+  font-weight:normal;
+  margin-bottom:4px;
+}
+.title-divider{
+  width:100%;
+  height:1px;
+  background:#000;
+  margin-bottom:10px;
+}
+.info-line{
+  font-size:14px;
+  line-height:32px;
+  white-space:nowrap;
+}
+.info-line input{
+  border:none;
+  border-bottom:1px solid #000;
+  background:transparent;
+  outline:none;
+  font-size:14px;
+}
+.bottom-block input{
+    border: none !important;
+    border-bottom: 1px solid #000 !important;
+    background: transparent;
+    outline: none;
+}
+.rx-divider{
+  width:100%;
+  height:1px;
+  background:#000;
+  margin:16px 0 4px 0;
+}
+.rp-sign{
+  font-size:40px;
+}
+.drug-text-area{
+  font-size:16px;
+  line-height:32px;
+  min-height:62mm;
+  white-space:pre-line;
+  padding-left:6mm;
+}
+.bottom-block{
+  position:absolute;
+  left:12mm;
+  right:12mm;
+  bottom:12mm;
+}
+.doc-line{
+  font-size:14px;
+  line-height:32px;
+  margin-bottom:4px;
+}
+.doc-divider{
+  width:100%;
+  height:1px;
+  background:#000;
+  margin-bottom:6px;
+}
+.bottom-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:14px;
+  line-height:32px;
+}
+
+/* =========打印专用样式 ========= */
+@media print{
+  .left-panel{
+    display:none !important;
+  }
+  body{
+    background:#fff;
+    display:block;
+  }
+  .right-panel{
+    padding:0;
+    overflow:visible;
+    background:#fff;
+  }
+  .pres-card{
+    border:none !important;
+  }
+  @page{
+    size:A5 portrait;
+    margin:0mm;
+  }
+}
+</style>
+</head>
+<body>
+<!-- 左侧操作区域 -->
+<div class="left-panel">
+  <div class="top-bar">
+    <button onclick="location.href='main.html'">🏠 返回系统首页</button>
+  </div>
+
+  <h3>处方信息录入</h3>
+  <div class="form-row">
+    <div class="form-item">
+      <label>乡：</label>
+      <input id="in_town" type="text">
+    </div>
+    <div class="form-item">
+      <label>村：</label>
+      <input id="in_village" type="text">
+    </div>
+    <div class="form-item">
+      <label>电话：</label>
+      <input id="in_tel" type="text">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-item">
+      <label>姓名：</label>
+      <input id="in_name" type="text">
+    </div>
+    <div class="form-item">
+      <label>性别：</label>
+      <select id="in_sex">
+        <option value="">请选择</option>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+    </div>
+    <div class="form-item">
+      <label>年龄：</label>
+      <input id="in_age" type="text">
+    </div>
+    <div class="form-item">
+      <label>科别：</label>
+      <input id="in_depart" type="text">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-item" style="flex:2;">
+      <label>临床诊断：</label>
+      <input id="in_diagnosis" type="text">
+    </div>
+  </div>
+  <!-- 日期：文本框可手动输入 + 点击图标打开放大日历 -->
+  <div class="form-row">
+    <div class="form-item">
+      <label>日期：</label>
+      <div class="date-input-wrap">
+        <input id="in_date" type="text" placeholder="2026-08-15">
+        <button type="button" class="calendar-btn" onclick="toggleCalendar()">📅</button>
+        <div class="calendar-panel" id="calendarPanel">
+          <div class="calendar-head">
+            <button onclick="prevMonth()">◀</button>
+            <select id="sel_year"></select>
+            <span>年</span>
+            <select id="sel_month"></select>
+            <span>月</span>
+            <button onclick="nextMonth()">▶</button>
+          </div>
+          <div class="week-title">
+            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+          </div>
+          <div class="day-grid" id="dayGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:16px;">选择药品（按分类选取）</h3>
+  <div class="classify-wrap">
+    <div class="classify-list" id="classifyBox"></div>
+    <div class="drug-select-list" id="drugSelectBox"></div>
+  </div>
+
+  <h3>药品信息（选中药品自动填充，也可手动修改）</h3>
+  <div class="form-item">
+    <label>药品名称：</label>
+    <input id="drug_name" placeholder="例如：阿奇霉素胶囊">
+  </div>
+  <div class="form-item">
+    <label>规格：</label>
+    <input id="drug_spec" placeholder="例如：0.25g×6粒">
+  </div>
+  <div class="form-item">
+    <label>用法用量：</label>
+    <input id="drug_usage" placeholder="例如：2粒 每日1次 口服">
+  </div>
+
+  <div class="btn-group">
+    <button onclick="addDrug()">添加药品到处方</button>
+    <button onclick="clearAll()">清空全部处方</button>
+    <button class="btn-print" onclick="window.print()">🖨【打印处方】</button>
+    <button onclick="savePrescriptionData()">💾保存处方记录</button>
+  </div>
+
+  <div class="drug-list-box">
+    <div>已添加药品列表：</div>
+    <div id="drug_show"></div>
+  </div>
+</div>
+
+<!-- 右侧预览区域 -->
+<div class="right-panel">
+  <div class="pres-card">
+    <div class="pres-title">辛庄中心卫生院一体化村卫生室专用处方笺</div>
+    <div class="title-divider"></div>
+
+    <div class="info-line">
+      <input id="pre_town" style="width:70px;">乡<input id="pre_village" style="width:70px;">村 &nbsp;&nbsp;&nbsp;电话：<input id="pre_tel" style="width:100px;">
+    </div>
+
+    <div class="info-line" style="display:flex;justify-content:space-between;">
+      <span>姓名：<input id="pre_name" style="width:110px;"></span>
+      <span>性别：<input id="pre_sex" style="width:70px;"></span>
+      <span>年龄：<input id="pre_age" style="width:70px;"></span>
+    </div>
+
+    <div class="info-line" style="display:flex;justify-content:space-between;">
+      <span>科别：<input id="pre_depart" style="width:65px;"></span>
+      <span>临床诊断：<input id="pre_diagnosis" style="width:120px;"></span>
+      <span>日期：<input id="pre_date" style="width:70px;"></span>
+    </div>
+
+    <div class="rx-divider"></div>
+    <div class="rp-sign">Rp</div>
+    <div class="drug-text-area" id="pre_drug_area"></div>
+
+    <div class="bottom-block">
+      <div class="doc-line">医师签名：<input id="pre_doctor" style="width:220px;"></div>
+      <div class="doc-divider"></div>
+      <div class="bottom-row">
+        <span>药品金额<input id="pre_total_money" style="width:90px;"></span>
+        <span>审核<input style="width:70px;"></span>
+        <span>调配<input style="width:70px;"></span>
+        <span>核对<input style="width:70px;"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let allRawDrugs = JSON.parse(localStorage.getItem("medicineList") || "[]");
+let drugLibrary = [];
+(function buildGroup(){
+  let groupMap = {};
+  allRawDrugs.forEach(item=>{
+    let typeName = item.type;
+    if(!groupMap[typeName]){
+      groupMap[typeName] = [];
+    }
+    groupMap[typeName].push({
+      name: item.name,
+      spec: item.spec,
+      usage: item.defaultUsage,
+      price: Number(item.price || 0)
+    });
+  })
+  for(let key in groupMap){
+    drugLibrary.push({
+      className: key,
+      drugList: groupMap[key]
+    })
+  }
+})();
+
+let drugArr = [];
+let currentClassIndex = null;
+let tempSelectPrice = 0;
+
+// ==========日历全局变量==========
+let viewYear;
+let viewMonth;
+const MIN_Y = 2026;
+const MAX_Y = 2030;
+
+// 切换日历显示/隐藏
+function toggleCalendar(){
+  const panel = document.getElementById("calendarPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+  if(panel.style.display === "block") renderCalendar();
+}
+
+// 填充年月下拉框
+function fillYearMonthSelect(){
+  const selY = document.getElementById("sel_year");
+  const selM = document.getElementById("sel_month");
+  selY.innerHTML = "";
+  selM.innerHTML = "";
+  //填充年份
+  for(let y = MIN_Y; y <= MAX_Y; y++){
+    let opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    if(y === viewYear) opt.selected = true;
+    selY.appendChild(opt);
+  }
+  //填充月份
+  for(let m = 0; m < 12; m++){
+    let opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m+1;
+    if(m === viewMonth) opt.selected = true;
+    selM.appendChild(opt);
+  }
+  //下拉切换监听
+  selY.onchange = function(){
+    viewYear = parseInt(this.value);
+    renderCalendar();
+  }
+  selM.onchange = function(){
+    viewMonth = parseInt(this.value);
+    renderCalendar();
+  }
+}
+
+// 渲染日历面板
+function renderCalendar(){
+  fillYearMonthSelect();
+  const grid = document.getElementById("dayGrid");
+  const firstDay = new Date(viewYear, viewMonth, 1);
+  const lastDay = new Date(viewYear, viewMonth+1, 0);
+  const prevLast = new Date(viewYear, viewMonth, 0);
+
+  let html = "";
+  // 上个月尾部天数
+  for(let i = firstDay.getDay(); i > 0; i--){
+    html += `<div class="day-cell other-month">${prevLast.getDate() - i + 1}</div>`;
+  }
+  // 当月日期
+  const currentVal = document.getElementById("in_date").value;
+  for(let d = 1; d <= lastDay.getDate(); d++){
+    const isCur = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` === currentVal;
+    html += `<div class="day-cell ${isCur?'current':''}" onclick="pickDay(${d})">${d}</div>`;
+  }
+  // 下个月开头
+  const totalRender = html.match(/day-cell/g).length;
+  let nextD = 1;
+  while(totalRender + (nextD-1) < 42){
+    html += `<div class="day-cell other-month">${nextD++}</div>`;
+  }
+  grid.innerHTML = html;
+}
+// 选中日期
+function pickDay(day){
+  const m = String(viewMonth+1).padStart(2,'0');
+  const d = String(day).padStart(2,'0');
+  const dateStr = `${viewYear}-${m}-${d}`;
+  document.getElementById("in_date").value = dateStr;
+  document.getElementById("pre_date").value = dateStr;
+  document.getElementById("calendarPanel").style.display = "none";
+}
+function prevMonth(){
+  viewMonth--;
+  if(viewMonth < 0){
+    viewYear--;
+    viewMonth = 11;
+    if(viewYear < MIN_Y){ viewYear = MIN_Y; viewMonth = 0; }
+  }
+  renderCalendar();
+}
+function nextMonth(){
+  viewMonth++;
+  if(viewMonth > 11){
+    viewYear++;
+    viewMonth = 0;
+    if(viewYear > MAX_Y){ viewYear = MAX_Y; viewMonth = 11; }
+  }
+  renderCalendar();
+}
+
+function initPage(){
+  document.getElementById("in_town").value = "辛庄";
+  document.getElementById("in_village").value = "北官庄";
+  document.getElementById("pre_town").value = "辛庄";
+  document.getElementById("pre_village").value = "北官庄";
+  document.getElementById("pre_doctor").value = "韩卫";
+
+  const now = new Date();
+  viewYear = now.getFullYear();
+  viewMonth = now.getMonth();
+  // 边界锁定
+  if(viewYear < MIN_Y) viewYear = MIN_Y;
+  if(viewYear > MAX_Y) viewYear = MAX_Y;
+
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const todayStr = `${y}-${m}-${d}`;
+  
+  document.getElementById('in_date').value = todayStr;
+  document.getElementById('pre_date').value = todayStr;
+
+  renderClassify();
+}
+
+function renderClassify(){
+  let html = "";
+  drugLibrary.forEach((item,idx)=>{
+    html += `<div class="classify-item ${currentClassIndex===idx?'active':''}" onclick="selectClass(${idx})">${item.className}</div>`;
+  })
+  document.getElementById("classifyBox").innerHTML = html;
+  if(currentClassIndex !== null){
+    renderDrugItem();
+  }else{
+    document.getElementById("drugSelectBox").innerHTML = "<span style='font-size:14px;color:#666'>请先点击上方药品分类</span>";
+  }
+}
+
+function selectClass(idx){
+  currentClassIndex = idx;
+  renderClassify();
+  renderDrugItem();
+}
+
+function renderDrugItem(){
+  const targetClass = drugLibrary[currentClassIndex];
+  let html = "";
+  targetClass.drugList.forEach(drug=>{
+    html += `<div class="drug-select-item" onclick="fillDrugInfo('${drug.name}','${drug.spec}','${drug.usage}',${drug.price})">${drug.name}</div>`;
+  })
+  document.getElementById("drugSelectBox").innerHTML = html;
+}
+
+function fillDrugInfo(name,spec,usage,price=0){
+  document.getElementById("drug_name").value = name;
+  document.getElementById("drug_spec").value = spec;
+  document.getElementById("drug_usage").value = usage;
+  tempSelectPrice = Number(price);
+}
+
+// 双向同步监听
+document.querySelectorAll(".left-panel input,.left-panel select").forEach(el=>{
+  el.addEventListener('input',function(){
+    if(this.id === "in_date"){
+      document.getElementById("pre_date").value = this.value;
+      return;
+    }
+    const preId = "pre_" + this.id.replace("in_","");
+    let target = document.getElementById(preId);
+    if(target) target.value = this.value;
+  })
+})
+
+function addDrug(){
+  let name = document.getElementById("drug_name").value.trim();
+  let spec = document.getElementById("drug_spec").value.trim();
+  let usage = document.getElementById("drug_usage").value.trim();
+  if(!name){
+    alert("请填写药品名称");
+    return;
+  }
+  drugArr.push({
+    name,
+    spec,
+    usage,
+    price: tempSelectPrice
+  });
+  document.getElementById("drug_name").value = "";
+  document.getElementById("drug_spec").value = "";
+  document.getElementById("drug_usage").value = "";
+  refreshDrugView();
+}
+
+function refreshDrugView(){
+  let html = "";
+  let printTextArr = [];
+  let totalMoney = 0;
+  drugArr.forEach((item,idx)=>{
+    let lineText = `${item.name} ${item.spec}\n　　　${item.usage}`;
+    printTextArr.push(lineText);
+    html += `<div class="drug-item-row">
+      <span>${item.name} ${item.spec}</span>
+      <span class="del-drug" onclick="delDrug(${idx})">删除</span>
+    </div>`;
+    totalMoney += Number(item.price);
+  });
+  document.getElementById("drug_show").innerHTML = html;
+  document.getElementById("pre_drug_area").innerText = printTextArr.join("\n");
+  document.getElementById("pre_total_money").value = totalMoney.toFixed(2);
+}
+
+function delDrug(index){
+  drugArr.splice(index,1);
+  refreshDrugView();
+}
+
+function clearAll(){
+  document.querySelectorAll(".left-panel input,.left-panel select").forEach(i=>i.value="");
+  drugArr = [];
+  currentClassIndex = null;
+  tempSelectPrice = 0;
+  refreshDrugView();
+  initPage();
+}
+
+function savePrescriptionData() {
+    const patientName = document.getElementById("in_name").value.trim();
+    const sex = document.getElementById("in_sex").value.trim();
+    const age = document.getElementById("in_age").value.trim();
+    const tel = document.getElementById("in_tel").value.trim();
+    const depart = document.getElementById("in_depart").value.trim();
+    const diagnosis = document.getElementById("in_diagnosis").value.trim();
+    const town = document.getElementById("in_town").value.trim();
+    const village = document.getElementById("in_village").value.trim();
+    const selectDate = document.getElementById("in_date").value;
+
+    if (!patientName) {
+        alert("患者姓名不能为空！");
+        return;
+    }
+    if(drugArr.length === 0){
+        alert("尚未添加任何药品，无法保存处方！");
+        return;
+    }
+
+    let totalMoney = 0;
+    drugArr.forEach(item=>{
+        totalMoney += Number(item.price);
+    })
+
+    let drugText = "";
+    drugArr.forEach((item,index)=>{
+        drugText += `${item.name} ${item.spec}\n　　　${item.usage}`;
+        if(index !== drugArr.length - 1) drugText += "\n\n";
+    })
+
+    const presData = {
+        presNo: "Rp" + Date.now(),
+        patientName,
+        sex,
+        age,
+        tel,
+        town,
+        village,
+        depart,
+        diagnosis,
+        drugContent: drugText,
+        totalMoney: totalMoney.toFixed(2),
+        createDate: selectDate
+    };
+
+    let recordList = JSON.parse(localStorage.getItem("prescriptionRecords") || "[]");
+    recordList.push(presData);
+    localStorage.setItem("prescriptionRecords", JSON.stringify(recordList));
+    alert("✅处方保存成功！前往处方查询页面查看");
+}
+
+// 点击空白区域关闭日历
+document.addEventListener("click",function(e){
+  const wrap = document.querySelector(".date-input-wrap");
+  const panel = document.getElementById("calendarPanel");
+  if(!wrap.contains(e.target)){
+    panel.style.display = "none";
+  }
+})
+
+window.onload = initPage;
+</script>
+</body>
+</html>
