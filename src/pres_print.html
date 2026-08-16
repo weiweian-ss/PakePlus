@@ -1,0 +1,223 @@
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>辛庄中心卫生院处方笺 A5最终定稿版</title>
+<style>
+*{
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ font-family: "SimSun", "宋体";
+}
+body{
+ background: #fff;
+ padding: 16px;
+}
+.operation-bar{
+ margin-bottom: 15px;
+}
+button{
+ padding: 8px 16px;
+ font-size:14px;
+ cursor: pointer;
+ margin-right: 8px;
+}
+/* A5 处方外框 148mm × 210mm */
+.pres-card {
+width:148mm;
+height:210mm;
+border:1px solid #333;
+margin:0 auto;
+padding:12mm;
+position:relative;
+}
+/* 顶部居中大标题 */
+.pres-title{
+text-align:center;
+font-size:19px;
+font-weight:normal;
+margin-bottom:4px;
+}
+/* 标题下方通栏分隔线 */
+.title-divider {
+width:100%;
+height:1px;
+background:#000;
+margin-bottom:10px;
+}
+/* 患者信息行公共基础 */
+.info-line {
+font-size:14px;
+line-height:32px;
+white-space:nowrap;
+}
+.info-line input {
+border:none;
+border-bottom:1px solid #000;
+background:transparent;
+outline:none;
+font-size:14px;
+}
+/* ========== 底部输入框统一样式，消除方框只保留底部横线 ========== */
+.bottom-block input {
+border: none !important;
+border-bottom: 1px solid #000 !important;
+background: transparent;
+outline: none;
+}
+/* Rx 上方分隔线，和标题下方横线样式完全一致 */
+.rx-divider {
+width:100%;
+height:1px;
+background:#000;
+margin:16px 0 4px 0;
+}
+/* Rx 符号 信息栏下方靠左 */
+.rp-sign {
+font-size:40px;
+}
+.drug-text-area{
+font-size:14px;
+line-height:28px;
+min-height:62mm;
+white-space:pre-line;
+}
+/* 底部签字区域 */
+.bottom-block{
+position:absolute;
+left:12mm;
+right:12mm;
+bottom:12mm;
+}
+.doc-line{
+font-size:14px;
+line-height:32px;
+margin-bottom:4px;
+}
+/* 医师签名下方通栏分隔横线 */
+.doc-divider {
+width:100%;
+height:1px;
+background:#000;
+margin-bottom:6px;
+}
+.bottom-row {
+display:flex;
+justify-content:space-between;
+font-size:14px;
+line-height:32px;
+}
+/* ========= 打印配置【最终修复版】========= */
+@media print{
+.operation-bar{
+display:none !important;
+}
+body{
+padding:0 !important;
+margin:0 !important;
+background:#fff !important;
+}
+/* 重点：打印移除 pres-card 外围黑边框（解决预览四周黑框） */
+.pres-card{
+border:none !important;
+width:136mm !important;
+height:198mm !important;
+}
+/* 强制禁止处方内部元素分页拆分，杜绝多出空白第二页 */
+.pres-card * {
+page-break-inside: avoid !important;
+page-break-after: avoid !important;
+page-break-before: avoid !important;
+-webkit-print-color-adjust: exact !important;
+print-color-adjust: exact !important;
+}
+@page {
+size:A5 portrait;
+margin:6mm !important;
+}
+}
+</style>
+</head>
+<body>
+<div class="operation-bar">
+<button onclick="window.print()">🖨打印处方笺</button>
+<button onclick="clearAllDrug()">清空所有药品</button>
+<button onclick="fillTestData()">载入测试药品样本</button>
+</div>
+<div class="pres-card">
+<!--顶部横向居中大标题-->
+<div class="pres-title">辛庄中心卫生院一体化村卫生室专用处方笺</div>
+<div class="title-divider"></div>
+<div class="info-line">
+<input style="width:70px;">乡<input style="width:70px;">村 &nbsp;&nbsp;&nbsp;电话：<input id="inp_tel" style="width:100px;">
+</div>
+<div class="info-line" style="display:flex;justify-content:space-between;">
+<span>姓名：<input id="inp_name" style="width:110px;"></span>
+<span>性别：<input id="inp_sex" style="width:70px;"></span>
+<span>年龄：<input id="inp_age" style="width:70px;"></span>
+</div>
+<div class="info-line" style="display:flex; justify-content:space-between; align-items:center;">
+<span>科别：<input id="inp_dept" style="width:65px;"></span>
+<span>临床诊断：<input id="inp_diag" style="width:110px;"></span>
+<span>日期：<input id="inp_date" style="width:70px;"></span>
+</div>
+<div class="rx-divider"></div>
+<div class="rp-sign">Rp</div>
+<div class="drug-text-area" id="show_drug_list"></div>
+<div class="bottom-block">
+<!--重点改动：直接写入value="韩卫"，不需要JS赋值 -->
+<div class="doc-line">医师签名：<input id="inp_doctor" value="韩卫" style="width:220px;"></div>
+<div class="doc-divider"></div>
+<div class="bottom-row">
+<span>药品金额<input id="inp_total_money" style="width:90px;"></span>
+<span>审核<input style="width:70px;"></span>
+<span>调配<input style="width:70px;"></span>
+<span>核对<input style="width:70px;"></span>
+</div>
+</div>
+</div>
+<script>
+//登录校验
+let loginInfo = localStorage.getItem("loginUser");
+if(!loginInfo){
+alert("请登录系统！");
+location.href="index.html";
+}
+//自动填充当日日期
+const now = new Date();
+document.getElementById("inp_date").value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+//全局总金额
+let totalPrice = 0;
+/**
+* 添加药品
+* content：药品文字
+* price：该药品小计价格（可选参数）
+* 使用方式：addDrugRow("药品文字", 药品价格)
+*/
+function addDrugRow(content, price = 0){
+const dom = document.getElementById("show_drug_list");
+dom.innerText += content + "\n";
+//传入有效价格，自动累加总额
+if(!isNaN(parseFloat(price)) && parseFloat(price) > 0){
+totalPrice += parseFloat(price);
+document.getElementById("inp_total_money").value = totalPrice.toFixed(2);
+}
+}
+//清空药品，同步清空总金额
+function clearAllDrug(){
+document.getElementById("show_drug_list").innerText = "";
+totalPrice = 0;
+document.getElementById("inp_total_money").value = "";
+}
+//测试数据
+function fillTestData(){
+clearAllDrug();
+addDrugRow("阿奇霉素胶囊 0.25g×6粒", 12.5);
+addDrugRow("2粒 每日1次 口服");
+addDrugRow("");
+addDrugRow("抗病毒口服液 10ml×10支", 18.0);
+addDrugRow("1支 每日3次 口服");
+}
+</script>
+</body>
+</html>
