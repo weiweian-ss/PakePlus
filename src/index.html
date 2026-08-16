@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>卫生室电子处方系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑"}
+body{background:#f0f4f8;display:flex;align-items:center;justify-content:center;height:100vh}
+.login-box{width:380px;background:#fff;padding:32px;border-radius:10px;box-shadow:0 2px 12px #00000020}
+.title{text-align:center;font-size:24px;margin-bottom:28px;color:#225494}
+#loginBtn{width:100%;padding:14px;background:#225494;color:#fff;border:none;border-radius:4px;font-size:17px;cursor:pointer;margin-top:20px}
+#loginBtn:active{opacity:0.85}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="title">卫生室电子处方系统</div>
+  <button id="loginBtn">登录进入系统</button>
+</div>
+
+<script>
+const btn = document.getElementById('loginBtn');
+btn.onclick = ()=>{
+    //写入登录标识，直接放行进入系统主页
+    localStorage.setItem("loginUser",JSON.stringify({name:"执业医师"}));
+    location.href = "main.html";
+}
+</script>
+</body>
+</html>
